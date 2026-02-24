@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Hazine Avı - Multiplayer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0a0a0f;
+            color: #e0e0e0;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 16px;
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .game-header {
+            text-align: center;
+            padding: 20px 0 10px;
+        }
+
+        .game-header h1 {
+            font-size: 28px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #f7d94e, #e8a229);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.5px;
+        }
+
+        .game-header .subtitle {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        /* Screens */
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        /* Menu Screen */
+        .menu-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-top: 40px;
+        }
+
+        .btn {
+            padding: 16px 24px;
+            border: none;
+            border-radius: 14px;
+            font-family: 'Inter', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+            outline: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn:active {
+            transform: scale(0.96);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #f7d94e, #e8a229);
+            color: #1a1a2e;
+            box-shadow: 0 4px 20px rgba(247, 217, 78, 0.3);
+        }
+
+        .btn-primary:active:not(:disabled) {
+            box-shadow: 0 2px 10px rgba(247, 217, 78, 0.2);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #2a2a3e, #1e1e32);
+            color: #e0e0e0;
+            border: 1px solid #3a3a5e;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+            box-shadow: 0 4px 20px rgba(231, 76, 60, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            color: white;
+            box-shadow: 0 4px 20px rgba(46, 204, 113, 0.3);
+        }
+
+        .btn-small {
+            padding: 10px 18px;
+            font-size: 14px;
+            border-radius: 10px;
+        }
+
+        /* Room Code Display */
+        .room-code-display {
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .room-code-display .label {
+            font-size: 14px;
+            color: #888;
+            margin-bottom: 12px;
+        }
+
+        .room-code-display .code {
+            font-size: 48px;
+            font-weight: 900;
+            letter-spacing: 12px;
+            background: linear-gradient(135deg, #f7d94e, #e8a229);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .room-code-display .waiting {
+            margin-top: 16px;
+            font-size: 14px;
+            color: #888;
+        }
+
+        .waiting-dots::after {
+            content: '';
+            animation: dots 1.5s infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60%, 100% { content: '...'; }
+        }
+
+        /* Input */
+        .input-group {
+            margin: 30px 0;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 14px;
+            color: #888;
+            margin-bottom: 8px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 14px 18px;
+            border: 2px solid #2a2a3e;
+            border-radius: 12px;
+            background: #12121a;
+            color: #e0e0e0;
+            font-family: 'Inter', sans-serif;
+            font-size: 24px;
+            font-weight: 700;
+            text-align: center;
+            letter-spacing: 8px;
+            outline: none;
+            transition: border-color 0.2s ease;
+        }
+
+        .input-group input:focus {
+            border-color: #f7d94e;
+        }
+
+        .input-group input::placeholder {
+            color: #3a3a5e;
+            letter-spacing: 4px;
+            font-size: 16px;
+        }
+
+        /* Name Input */
+        .name-input {
+            font-size: 16px !important;
+            letter-spacing: 1px !important;
+        }
+
+        /* Game Screen */
+        .game-info-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .player-card {
+            flex: 1;
+            padding: 10px 12px;
+            border-radius: 12px;
+            background: #14141e;
+            border: 2px solid #2a2a3e;
+            text-align: center;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            min-width: 0;
+        }
+
+        .player-card.active-turn {
+            border-color: #f7d94e;
+            box-shadow: 0 0 20px rgba(247, 217, 78, 0.15);
+        }
+
+        .player-card .player-name {
+            font-size: 11px;
+            color: #888;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .player-card .player-score {
+            font-size: 22px;
+            font-weight: 900;
+        }
+
+        .player-card.p1 .player-score {
+            color: #3498db;
+        }
+
+        .player-card.p2 .player-score {
+            color: #e74c3c;
+        }
+
+        .player-card .player-indicator {
+            font-size: 9px;
+            color: #f7d94e;
+            margin-top: 2px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .player-card.active-turn .player-indicator {
+            opacity: 1;
+        }
+
+        .turn-indicator {
+            text-align: center;
+            padding: 8px;
+            margin-bottom: 12px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .turn-indicator.your-turn {
+            background: rgba(247, 217, 78, 0.1);
+            color: #f7d94e;
+            border: 1px solid rgba(247, 217, 78, 0.2);
+        }
+
+        .turn-indicator.opponent-turn {
+            background: rgba(136, 136, 136, 0.1);
+            color: #888;
+            border: 1px solid rgba(136, 136, 136, 0.15);
+        }
+
+        /* Grid */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 4px;
+            margin: 12px 0;
+            padding: 8px;
+            background: #0e0e16;
+            border-radius: 16px;
+            border: 1px solid #1e1e2e;
+        }
+
+        .grid-cell {
+            aspect-ratio: 1;
+            border: none;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #1e1e32, #252540);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            transition: transform 0.15s ease, background 0.3s ease, box-shadow 0.3s ease;
+            outline: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .grid-cell::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.05), transparent);
+            border-radius: 8px;
+        }
+
+        .grid-cell:not(.revealed):not(.disabled):active {
+            transform: scale(0.9);
+        }
+
+        .grid-cell:not(.revealed):not(.disabled):hover {
+            box-shadow: 0 0 12px rgba(247, 217, 78, 0.1);
+        }
+
+        .grid-cell.disabled {
+            cursor: not-allowed;
+        }
+
+        .grid-cell.revealed {
+            cursor: default;
+            transform: none;
+        }
+
+        .grid-cell.revealed.gold {
+            background: linear-gradient(135deg, #f7d94e22, #e8a22922);
+            border: 1px solid #f7d94e44;
+        }
+
+        .grid-cell.revealed.trap {
+            background: linear-gradient(135deg, #e74c3c22, #c0392b22);
+            border: 1px solid #e74c3c44;
+        }
+
+        .grid-cell.revealed.empty {
+            background: #0e0e1a;
+            border: 1px solid #1a1a28;
+        }
+
+        .grid-cell .cell-content {
+            opacity: 0;
+            transform: scale(0.5) rotateY(90deg);
+            transition: opacity 0.3s ease 0.1s, transform 0.3s ease 0.1s;
+            font-size: 18px;
+        }
+
+        .grid-cell.revealed .cell-content {
+            opacity: 1;
+            transform: scale(1) rotateY(0deg);
+        }
+
+        /* Stats bar */
+        .stats-bar {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin: 8px 0;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .stats-bar .stat {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* Modal / Overlay */
+        .overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            backdrop-filter: blur(4px);
+        }
+
+        .overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: #16161f;
+            border-radius: 20px;
+            padding: 32px 24px;
+            text-align: center;
+            max-width: 360px;
+            width: 100%;
+            border: 1px solid #2a2a3e;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal h2 {
+            font-size: 24px;
+            font-weight: 900;
+            margin-bottom: 8px;
+        }
+
+        .modal .result-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+        }
+
+        .modal .result-scores {
+            display: flex;
+            justify-content: center;
+            gap: 32px;
+            margin: 20px 0;
+        }
+
+        .modal .result-score {
+            text-align: center;
+        }
+
+        .modal .result-score .score-val {
+            font-size: 36px;
+            font-weight: 900;
+        }
+
+        .modal .result-score .score-label {
+            font-size: 12px;
+            color: #888;
+            margin-top: 4px;
+        }
+
+        /* Toast */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 200;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            pointer-events: none;
+        }
+
+        .toast {
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            opacity: 0;
+            transform: translateY(-10px) scale(0.95);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+
+        .toast.gold {
+            background: rgba(247, 217, 78, 0.95);
+            color: #1a1a2e;
+        }
+
+        .toast.trap {
+            background: rgba(231, 76, 60, 0.95);
+            color: white;
+        }
+
+        .toast.info {
+            background: rgba(52, 152, 219, 0.95);
+            color: white;
+        }
+
+        /* Back button */
+        .back-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .btn-back {
+            background: none;
+            border: none;
+            color: #888;
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            padding: 8px 0;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .btn-back:active {
+            color: #e0e0e0;
+        }
+
+        /* Error text */
+        .error-text {
+            color: #e74c3c;
+            font-size: 13px;
+            margin-top: 8px;
+            min-height: 20px;
+        }
+
+        /* Loading spinner */
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #3a3a5e;
+            border-top-color: #f7d94e;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 6px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Rules section */
+        .rules {
+            margin-top: 30px;
+            padding: 20px;
+            background: #12121a;
+            border-radius: 14px;
+            border: 1px solid #1e1e2e;
+        }
+
+        .rules h3 {
+            font-size: 14px;
+            color: #f7d94e;
+            margin-bottom: 12px;
+        }
+
+        .rules ul {
+            list-style: none;
+            font-size: 13px;
+            color: #888;
+            line-height: 1.8;
+        }
+
+        .rules ul li::before {
+            content: '• ';
+            color: #f7d94e;
+        }
+
+        /* Cell pop effect */
+        @keyframes cellPop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+            100% { transform: scale(1); }
+        }
+
+        .grid-cell.pop {
+            animation: cellPop 0.3s ease;
+        }
+
+        /* Responsive */
+        @media (max-width: 380px) {
+            .grid-container {
+                gap: 3px;
+                padding: 6px;
+            }
+            .grid-cell .cell-content {
+                font-size: 14px;
+            }
+            .player-card .player-score {
+                font-size: 18px;
+            }
+        }
+
+        /* Confetti */
+        .confetti-piece {
+            position: fixed;
+            width: 8px;
+            height: 8px;
+            border-radius: 2px;
+            z-index: 300;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- Result Overlay -->
+<div class="overlay" id="resultOverlay">
+    <div class="modal">
+        <div class="result-icon" id="resultIcon">🏆</div>
+        <h2 id="resultTitle">Oyun Bitti!</h2>
+        <p id="resultSubtitle" style="color:#888;font-size:14px;"></p>
+        <div class="result-scores">
+            <div class="result-score">
+                <div class="score-val" id="resultScore1" style="color:#3498db;">0</div>
+                <div class="score-label" id="resultName1">Oyuncu 1</div>
+            </div>
+            <div class="result-score">
+                <div class="score-val" id="resultScore2" style="color:#e74c3c;">0</div>
+                <div class="score-label" id="resultName2">Oyuncu 2</div>
+            </div>
+        </div>
+        <button class="btn btn-primary" onclick="goToMenu()" style="width:100%;margin-top:12px;">Ana Menüye Dön</button>
+    </div>
+</div>
+
+<div class="container">
+    <div class="game-header">
+        <h1>⛏️ Hazine Avı</h1>
+        <div class="subtitle">Multiplayer Macera</div>
+    </div>
+
+    <!-- MENU SCREEN -->
+    <div class="screen active" id="menuScreen">
+        <div class="input-group" style="margin-top:20px;">
+            <label>Oyuncu Adın</label>
+            <input type="text" id="playerNameInput" class="name-input" placeholder="Adını yaz..." maxlength="12">
+        </div>
+        <div class="menu-buttons">
+            <button class="btn btn-primary" onclick="createRoom()">🏠 Oda Kur</button>
+            <button class="btn btn-secondary" onclick="showScreen('joinScreen')">🚪 Odaya Katıl</button>
+        </div>
+        <div class="rules">
+            <h3>📜 Nasıl Oynanır?</h3>
+            <ul>
+                <li>8x8 ızgarada gizli hazineler ve tuzaklar var</li>
+                <li>💰 Altın bul → +10 puan & tekrar oyna</li>
+                <li>💣 Tuzağa bas → -5 puan & sıra rakibe geçer</li>
+                <li>⬜ Boş kare → sıra rakibe geçer</li>
+                <li>Tüm kareler açılınca en yüksek puan kazanır!</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- CREATE ROOM SCREEN -->
+    <div class="screen" id="createScreen">
+        <div class="back-row">
+            <button class="btn-back" onclick="leaveRoom()">← Geri</button>
+        </div>
+        <div class="room-code-display">
+            <div class="label">Oda Kodun</div>
+            <div class="code" id="roomCodeDisplay">----</div>
+            <div class="waiting"><span class="waiting-dots" id="waitingText">Rakip bekleniyor</span></div>
+        </div>
+        <div id="startBtnContainer" style="display:none;">
+            <p style="text-align:center;color:#2ecc71;margin-bottom:16px;font-weight:600;" id="opponentJoinedText">✅ Rakip katıldı!</p>
+            <button class="btn btn-success" style="width:100%;" onclick="startGame()">🎮 Oyunu Başlat</button>
+        </div>
+    </div>
+
+    <!-- JOIN ROOM SCREEN -->
+    <div class="screen" id="joinScreen">
+        <div class="back-row">
+            <button class="btn-back" onclick="showScreen('menuScreen')">← Geri</button>
+        </div>
+        <div class="input-group">
+            <label>Oda Kodu</label>
+            <input type="text" id="roomCodeInput" placeholder="4 haneli kod" maxlength="4" inputmode="numeric">
+        </div>
+        <div class="error-text" id="joinError"></div>
+        <button class="btn btn-primary" style="width:100%;margin-top:12px;" onclick="joinRoom()" id="joinBtn">🚪 Odaya Katıl</button>
+    </div>
+
+    <!-- GAME SCREEN -->
+    <div class="screen" id="gameScreen">
+        <div class="game-info-bar">
+            <div class="player-card p1" id="p1Card">
+                <div class="player-name" id="p1Name">Oyuncu 1</div>
+                <div class="player-score" id="p1Score">0</div>
+                <div class="player-indicator">◆ SIRA</div>
+            </div>
+            <div class="player-card p2" id="p2Card">
+                <div class="player-name" id="p2Name">Oyuncu 2</div>
+                <div class="player-score" id="p2Score">0</div>
+                <div class="player-indicator">◆ SIRA</div>
+            </div>
+        </div>
+        <div class="turn-indicator" id="turnIndicator">Sıra sizde!</div>
+        <div class="stats-bar">
+            <div class="stat">💰 Altın: <span id="goldLeft">0</span></div>
+            <div class="stat">💣 Tuzak: <span id="trapLeft">0</span></div>
+            <div class="stat">📦 Kalan: <span id="cellsLeft">0</span></div>
+        </div>
+        <div class="grid-container" id="gridContainer"></div>
+        <button class="btn btn-danger btn-small" onclick="leave
