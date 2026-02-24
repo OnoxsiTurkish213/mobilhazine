@@ -1,673 +1,644 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Hazine Avı - Multiplayer</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
-    <style>
-        *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-        body{font-family:'Inter',sans-serif;background:#0b0b12;color:#e0e0e0;min-height:100vh;min-height:100dvh;overflow-x:hidden}
-        .container{max-width:480px;margin:0 auto;padding:14px;min-height:100vh;min-height:100dvh}
-        .header{text-align:center;padding:18px 0 6px}
-        .header h1{font-size:26px;font-weight:900;background:linear-gradient(135deg,#ffd700,#e8a229);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-        .header .sub{font-size:11px;color:#555;letter-spacing:3px;text-transform:uppercase;margin-top:2px}
-        .screen{display:none}.screen.active{display:block}
-        .btn{display:block;width:100%;padding:15px;border:none;border-radius:14px;font-family:'Inter',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:transform .12s,box-shadow .12s;outline:none}
-        .btn:active:not(:disabled){transform:scale(.96)}.btn:disabled{opacity:.45;cursor:not-allowed}
-        .btn-gold{background:linear-gradient(135deg,#ffd700,#e8a229);color:#1a1a2e;box-shadow:0 4px 18px #ffd70033}
-        .btn-dark{background:#181828;color:#ccc;border:1px solid #2a2a40;box-shadow:0 4px 18px #0003}
-        .btn-green{background:linear-gradient(135deg,#2ecc71,#27ae60);color:#fff;box-shadow:0 4px 18px #2ecc7133}
-        .btn-red{background:linear-gradient(135deg,#e74c3c,#c0392b);color:#fff;box-shadow:0 4px 18px #e74c3c33}
-        .btn-sm{padding:10px;font-size:13px;border-radius:10px}
-        .gap{display:flex;flex-direction:column;gap:14px;margin-top:28px}
-        .input-box{margin:24px 0}
-        .input-box label{display:block;font-size:13px;color:#777;margin-bottom:6px}
-        .input-box input{width:100%;padding:13px 16px;border:2px solid #222238;border-radius:12px;background:#101018;color:#eee;font-family:'Inter',sans-serif;font-size:22px;font-weight:700;text-align:center;letter-spacing:8px;outline:none;transition:border-color .2s}
-        .input-box input:focus{border-color:#ffd700}
-        .input-box input.name-in{font-size:16px;letter-spacing:1px}
-        .input-box input::placeholder{color:#333;letter-spacing:3px;font-size:15px}
-        .err{color:#e74c3c;font-size:12px;margin-top:6px;min-height:18px;text-align:center}
-        .room-show{text-align:center;margin:32px 0}
-        .room-show .lbl{font-size:13px;color:#777;margin-bottom:10px}
-        .room-show .code{font-size:52px;font-weight:900;letter-spacing:14px;background:linear-gradient(135deg,#ffd700,#e8a229);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-        .room-show .wait{margin-top:14px;font-size:13px;color:#666}
-        .back-btn{background:none;border:none;color:#777;font-size:13px;font-family:'Inter',sans-serif;cursor:pointer;padding:8px 0;display:flex;align-items:center;gap:4px}
-        .back-btn:active{color:#ddd}
-        .rules{margin-top:28px;padding:18px;background:#101018;border-radius:14px;border:1px solid #1a1a28}
-        .rules h3{font-size:13px;color:#ffd700;margin-bottom:10px}
-        .rules ul{list-style:none;font-size:12px;color:#777;line-height:2}
-        .rules ul li::before{content:'• ';color:#ffd700}
-        .game-bar{display:flex;gap:8px;margin-bottom:10px}
-        .p-card{flex:1;padding:10px 8px;border-radius:12px;background:#101018;border:2px solid #1e1e30;text-align:center;transition:border-color .3s,box-shadow .3s;min-width:0}
-        .p-card.on{border-color:#ffd700;box-shadow:0 0 16px #ffd70018}
-        .p-card .pn{font-size:10px;color:#777;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-        .p-card .ps{font-size:22px;font-weight:900}
-        .p-card.c1 .ps{color:#3498db}.p-card.c2 .ps{color:#e74c3c}
-        .p-card .pt{font-size:8px;color:#ffd700;margin-top:2px;opacity:0;transition:opacity .3s}.p-card.on .pt{opacity:1}
-        .turn-bar{text-align:center;padding:7px;margin-bottom:10px;border-radius:10px;font-size:12px;font-weight:700;transition:all .3s}
-        .turn-bar.my{background:#ffd70012;color:#ffd700;border:1px solid #ffd70025}
-        .turn-bar.op{background:#88888812;color:#777;border:1px solid #88888818}
-        .stats{display:flex;justify-content:center;gap:14px;font-size:11px;color:#555;margin-bottom:8px}
-        .stats .s{display:flex;align-items:center;gap:3px}
-        .grid{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;padding:8px;background:#08080e;border-radius:14px;border:1px solid #161624}
-        .cell{aspect-ratio:1;border:none;border-radius:7px;background:linear-gradient(145deg,#1a1a30,#22223a);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;transition:transform .12s,background .3s,border .3s;outline:none;position:relative;overflow:hidden}
-        .cell::before{content:'';position:absolute;inset:0;background:linear-gradient(145deg,rgba(255,255,255,.04),transparent);border-radius:7px;pointer-events:none}
-        .cell:not(.rev):not(.dis):active{transform:scale(.88)}
-        .cell.dis{cursor:not-allowed}.cell.rev{cursor:default}
-        .cell.rev.gold{background:#ffd70015;border:1px solid #ffd70030}
-        .cell.rev.trap{background:#e74c3c15;border:1px solid #e74c3c30}
-        .cell.rev.empty{background:#08080e;border:1px solid #12121e}
-        .cell .cc{opacity:0;transform:scale(.4) rotateY(90deg);transition:opacity .25s .08s,transform .25s .08s;font-size:16px;pointer-events:none}
-        .cell.rev .cc{opacity:1;transform:scale(1) rotateY(0)}
-        @keyframes pop{0%{transform:scale(1)}50%{transform:scale(1.18)}100%{transform:scale(1)}}.cell.pop{animation:pop .28s ease}
-        .overlay{display:none;position:fixed;inset:0;background:#000b;z-index:100;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(5px)}
-        .overlay.on{display:flex}
-        .modal{background:#13131e;border-radius:20px;padding:30px 22px;text-align:center;max-width:340px;width:100%;border:1px solid #252538;box-shadow:0 20px 50px #0008}
-        .modal h2{font-size:22px;font-weight:900;margin-bottom:6px}
-        .modal .ri{font-size:60px;margin-bottom:14px}
-        .modal .rs{display:flex;justify-content:center;gap:30px;margin:18px 0}
-        .modal .rs .rv{text-align:center}
-        .modal .rs .rv .v{font-size:34px;font-weight:900}
-        .modal .rs .rv .l{font-size:11px;color:#777;margin-top:3px}
-        .toast-box{position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:200;display:flex;flex-direction:column;gap:6px;pointer-events:none}
-        .toast{padding:9px 18px;border-radius:10px;font-size:12px;font-weight:700;opacity:0;transform:translateY(-8px) scale(.95);transition:opacity .25s,transform .25s;white-space:nowrap}
-        .toast.show{opacity:1;transform:translateY(0) scale(1)}
-        .toast.tg{background:#ffd700ee;color:#1a1a2e}
-        .toast.tt{background:#e74c3cee;color:#fff}
-        .toast.ti{background:#3498dbee;color:#fff}
-        .confetti{position:fixed;z-index:300;pointer-events:none;border-radius:2px}
-        .joined-txt{text-align:center;color:#2ecc71;margin-bottom:14px;font-weight:700;font-size:14px}
-        .loading{display:inline-block;width:16px;height:16px;border:2px solid #333;border-top-color:#ffd700;border-radius:50%;animation:sp .7s linear infinite;vertical-align:middle;margin-right:6px}
-        @keyframes sp{to{transform:rotate(360deg)}}
-        @media(max-width:370px){.grid{gap:3px;padding:6px}.cell .cc{font-size:13px}.p-card .ps{font-size:18px}}
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Hazine Avı</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:'Inter',sans-serif;background:#0b0b12;color:#e0e0e0;min-height:100vh;overflow-x:hidden}
+.wrap{max-width:460px;margin:0 auto;padding:14px}
+.hdr{text-align:center;padding:16px 0 4px}
+.hdr h1{font-size:26px;font-weight:900;background:linear-gradient(135deg,#ffd700,#e8a229);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hdr small{font-size:10px;color:#555;letter-spacing:3px;text-transform:uppercase}
+#status{text-align:center;padding:6px;font-size:11px;border-radius:8px;margin:8px 0}
+#status.ok{background:#2ecc7122;color:#2ecc71;border:1px solid #2ecc7133}
+#status.no{background:#e74c3c22;color:#e74c3c;border:1px solid #e74c3c33}
+#status.wait{background:#f3960022;color:#f39c12;border:1px solid #f3960033}
+.scr{display:none}.scr.on{display:block}
+.btn{display:block;width:100%;padding:15px;border:none;border-radius:14px;font-family:'Inter',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:transform .12s;outline:none}
+.btn:active:not(:disabled){transform:scale(.96)}.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-g{background:linear-gradient(135deg,#ffd700,#e8a229);color:#1a1a2e;box-shadow:0 4px 18px #ffd70030}
+.btn-d{background:#181828;color:#ccc;border:1px solid #2a2a40}
+.btn-gr{background:linear-gradient(135deg,#2ecc71,#27ae60);color:#fff}
+.btn-r{background:linear-gradient(135deg,#e74c3c,#c0392b);color:#fff}
+.btn-s{padding:10px;font-size:13px;border-radius:10px}
+.gap{display:flex;flex-direction:column;gap:14px;margin-top:24px}
+.inp{margin:20px 0}
+.inp label{display:block;font-size:13px;color:#777;margin-bottom:6px}
+.inp input{width:100%;padding:13px;border:2px solid #222238;border-radius:12px;background:#101018;color:#eee;font-family:'Inter',sans-serif;font-size:20px;font-weight:700;text-align:center;letter-spacing:6px;outline:none;transition:border-color .2s}
+.inp input:focus{border-color:#ffd700}
+.inp input.nm{font-size:16px;letter-spacing:1px}
+.inp input::placeholder{color:#333;letter-spacing:3px;font-size:14px}
+.err{color:#e74c3c;font-size:12px;text-align:center;min-height:18px;margin-top:6px}
+.code-show{text-align:center;margin:28px 0}
+.code-show .lb{font-size:13px;color:#777;margin-bottom:8px}
+.code-show .cd{font-size:48px;font-weight:900;letter-spacing:12px;background:linear-gradient(135deg,#ffd700,#e8a229);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.code-show .wt{margin-top:12px;font-size:13px;color:#666}
+.bk{background:none;border:none;color:#777;font-size:13px;font-family:'Inter',sans-serif;cursor:pointer;padding:8px 0}
+.bk:active{color:#ddd}
+.jt{text-align:center;color:#2ecc71;margin-bottom:12px;font-weight:700;font-size:14px}
+.rules{margin-top:24px;padding:16px;background:#101018;border-radius:14px;border:1px solid #1a1a28}
+.rules h3{font-size:13px;color:#ffd700;margin-bottom:8px}
+.rules ul{list-style:none;font-size:12px;color:#777;line-height:2}
+.rules li::before{content:'• ';color:#ffd700}
+.gbar{display:flex;gap:8px;margin-bottom:8px}
+.pc{flex:1;padding:10px 6px;border-radius:12px;background:#101018;border:2px solid #1e1e30;text-align:center;transition:border-color .3s,box-shadow .3s}
+.pc.act{border-color:#ffd700;box-shadow:0 0 14px #ffd70018}
+.pc .nn{font-size:10px;color:#777;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pc .sc{font-size:22px;font-weight:900}
+.pc.c1 .sc{color:#3498db}.pc.c2 .sc{color:#e74c3c}
+.pc .si{font-size:8px;color:#ffd700;margin-top:2px;opacity:0;transition:opacity .3s}.pc.act .si{opacity:1}
+.tb{text-align:center;padding:7px;margin-bottom:8px;border-radius:10px;font-size:12px;font-weight:700}
+.tb.my{background:#ffd70012;color:#ffd700;border:1px solid #ffd70025}
+.tb.op{background:#88888812;color:#777;border:1px solid #88888818}
+.sts{display:flex;justify-content:center;gap:14px;font-size:11px;color:#555;margin-bottom:6px}
+.grid{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;padding:8px;background:#08080e;border-radius:14px;border:1px solid #161624}
+.cl{aspect-ratio:1;border:none;border-radius:7px;background:linear-gradient(145deg,#1a1a30,#22223a);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;transition:transform .12s,background .3s;outline:none;position:relative}
+.cl::before{content:'';position:absolute;inset:0;background:linear-gradient(145deg,rgba(255,255,255,.04),transparent);border-radius:7px;pointer-events:none}
+.cl:not(.rv):not(.ds):active{transform:scale(.88)}
+.cl.ds{cursor:not-allowed}.cl.rv{cursor:default}
+.cl.rv.gold{background:#ffd70015;border:1px solid #ffd70030}
+.cl.rv.trap{background:#e74c3c15;border:1px solid #e74c3c30}
+.cl.rv.empty{background:#08080e;border:1px solid #12121e}
+.cl .cc{opacity:0;transform:scale(.4);transition:opacity .25s .08s,transform .25s .08s;font-size:16px;pointer-events:none}
+.cl.rv .cc{opacity:1;transform:scale(1)}
+@keyframes pp{0%{transform:scale(1)}50%{transform:scale(1.15)}100%{transform:scale(1)}}.cl.pp{animation:pp .28s ease}
+.ov{display:none;position:fixed;inset:0;background:#000b;z-index:100;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(5px)}
+.ov.on{display:flex}
+.md{background:#13131e;border-radius:20px;padding:28px 20px;text-align:center;max-width:340px;width:100%;border:1px solid #252538}
+.md h2{font-size:22px;font-weight:900;margin-bottom:6px}
+.md .ic{font-size:56px;margin-bottom:12px}
+.md .rsc{display:flex;justify-content:center;gap:28px;margin:16px 0}
+.md .rsc .rv{text-align:center}
+.md .rsc .rv .v{font-size:32px;font-weight:900}
+.md .rsc .rv .l{font-size:11px;color:#777;margin-top:2px}
+.tbox{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:200;display:flex;flex-direction:column;gap:6px;pointer-events:none}
+.tst{padding:8px 16px;border-radius:10px;font-size:12px;font-weight:700;opacity:0;transform:translateY(-8px) scale(.95);transition:opacity .25s,transform .25s;white-space:nowrap}
+.tst.sh{opacity:1;transform:translateY(0) scale(1)}
+.tst.tg{background:#ffd700ee;color:#1a1a2e}
+.tst.tt{background:#e74c3cee;color:#fff}
+.tst.ti{background:#3498dbee;color:#fff}
+.cft{position:fixed;z-index:300;pointer-events:none;border-radius:2px}
+@media(max-width:370px){.grid{gap:3px;padding:6px}.cl .cc{font-size:13px}.pc .sc{font-size:18px}}
+</style>
 </head>
 <body>
+<div class="tbox" id="TB"></div>
+<div class="ov" id="resOv">
+<div class="md">
+<div class="ic" id="rIco">🏆</div>
+<h2 id="rTit">Oyun Bitti!</h2>
+<p id="rSub" style="color:#777;font-size:13px"></p>
+<div class="rsc">
+<div class="rv"><div class="v" id="rs1" style="color:#3498db">0</div><div class="l" id="rn1">P1</div></div>
+<div class="rv"><div class="v" id="rs2" style="color:#e74c3c">0</div><div class="l" id="rn2">P2</div></div>
+</div>
+<button class="btn btn-g" onclick="goMenu()" style="margin-top:10px">Ana Menüye Dön</button>
+</div>
+</div>
+<div class="wrap">
+<div class="hdr"><h1>⛏️ Hazine Avı</h1><small>Multiplayer</small></div>
+<div id="status" class="wait">🔄 Firebase'e bağlanılıyor...</div>
 
-<div class="toast-box" id="TB"></div>
-
-<div class="overlay" id="resOv">
-    <div class="modal">
-        <div class="ri" id="resIco">🏆</div>
-        <h2 id="resT">Oyun Bitti!</h2>
-        <p id="resSub" style="color:#777;font-size:13px"></p>
-        <div class="rs">
-            <div class="rv"><div class="v" id="rs1" style="color:#3498db">0</div><div class="l" id="rn1">P1</div></div>
-            <div class="rv"><div class="v" id="rs2" style="color:#e74c3c">0</div><div class="l" id="rn2">P2</div></div>
-        </div>
-        <button class="btn btn-gold" onclick="backMenu()" style="margin-top:10px">Ana Menüye Dön</button>
-    </div>
+<!-- MENU -->
+<div class="scr on" id="S0">
+<div class="inp" style="margin-top:14px">
+<label>Oyuncu Adın</label>
+<input type="text" id="inpName" class="nm" placeholder="Adını yaz..." maxlength="12">
+</div>
+<div class="gap">
+<button class="btn btn-g" onclick="createRoom()" id="btnCrt" disabled>🏠 Oda Kur</button>
+<button class="btn btn-d" onclick="sw('S2')" id="btnJnP" disabled>🚪 Odaya Katıl</button>
+</div>
+<div class="rules">
+<h3>📜 Nasıl Oynanır?</h3>
+<ul>
+<li>8×8 ızgarada gizli hazineler ve tuzaklar</li>
+<li>💰 Altın → +10 puan &amp; tekrar oyna</li>
+<li>💣 Tuzak → −5 puan &amp; sıra rakibe</li>
+<li>⬜ Boş → sıra rakibe geçer</li>
+<li>Tüm kareler açılınca yüksek puan kazanır</li>
+</ul>
+</div>
 </div>
 
-<div class="container">
-    <div class="header">
-        <h1>⛏️ Hazine Avı</h1>
-        <div class="sub">Multiplayer Macera</div>
-    </div>
-
-    <!-- MENU -->
-    <div class="screen active" id="scMenu">
-        <div class="input-box" style="margin-top:18px">
-            <label>Oyuncu Adın</label>
-            <input type="text" id="nameIn" class="name-in" placeholder="Adını yaz..." maxlength="12">
-        </div>
-        <div class="gap">
-            <button class="btn btn-gold" id="btnCreate" onclick="doCreate()">🏠 Oda Kur</button>
-            <button class="btn btn-dark" onclick="goScreen('scJoin')">🚪 Odaya Katıl</button>
-        </div>
-        <div class="rules">
-            <h3>📜 Nasıl Oynanır?</h3>
-            <ul>
-                <li>8×8 ızgarada gizli hazineler ve tuzaklar var</li>
-                <li>💰 Altın bul → +10 puan &amp; tekrar oyna</li>
-                <li>💣 Tuzağa bas → −5 puan &amp; sıra rakibe</li>
-                <li>⬜ Boş kare → sıra rakibe geçer</li>
-                <li>Tüm kareler açılınca en yüksek puan kazanır!</li>
-            </ul>
-        </div>
-    </div>
-
-    <!-- LOBBY (create) -->
-    <div class="screen" id="scLobby">
-        <button class="back-btn" onclick="leaveLobby()">← Geri</button>
-        <div class="room-show">
-            <div class="lbl">Oda Kodun</div>
-            <div class="code" id="dispCode">----</div>
-            <div class="wait" id="waitTxt">⏳ Rakip bekleniyor...</div>
-        </div>
-        <div id="startBox" style="display:none">
-            <p class="joined-txt" id="joinedTxt">✅ Rakip katıldı!</p>
-            <button class="btn btn-green" onclick="doStart()">🎮 Oyunu Başlat</button>
-        </div>
-    </div>
-
-    <!-- JOIN -->
-    <div class="screen" id="scJoin">
-        <button class="back-btn" onclick="goScreen('scMenu')">← Geri</button>
-        <div class="input-box">
-            <label>Oda Kodu (4 Haneli)</label>
-            <input type="text" id="codeIn" placeholder="1234" maxlength="4" inputmode="numeric">
-        </div>
-        <div class="err" id="joinErr"></div>
-        <button class="btn btn-gold" onclick="doJoin()" id="btnJoin" style="margin-top:10px">🚪 Katıl</button>
-    </div>
-
-    <!-- WAITING P2 -->
-    <div class="screen" id="scWaitP2">
-        <button class="back-btn" onclick="leaveAsP2()">← Geri</button>
-        <div class="room-show">
-            <div class="lbl">Oda</div>
-            <div class="code" id="dispCode2">----</div>
-            <div class="wait">⏳ Kurucu oyunu başlatacak...</div>
-        </div>
-    </div>
-
-    <!-- GAME -->
-    <div class="screen" id="scGame">
-        <div class="game-bar">
-            <div class="p-card c1" id="pc1">
-                <div class="pn" id="gn1">P1</div>
-                <div class="ps" id="gs1">0</div>
-                <div class="pt">◆ SIRA</div>
-            </div>
-            <div class="p-card c2" id="pc2">
-                <div class="pn" id="gn2">P2</div>
-                <div class="ps" id="gs2">0</div>
-                <div class="pt">◆ SIRA</div>
-            </div>
-        </div>
-        <div class="turn-bar my" id="turnBar">Sıra sizde!</div>
-        <div class="stats">
-            <div class="s">💰 <span id="stGold">0</span></div>
-            <div class="s">💣 <span id="stTrap">0</span></div>
-            <div class="s">📦 <span id="stLeft">0</span></div>
-        </div>
-        <div class="grid" id="gGrid"></div>
-        <button class="btn btn-red btn-sm" onclick="leaveGame()" style="margin-top:10px">🚪 Ayrıl</button>
-    </div>
+<!-- LOBBY -->
+<div class="scr" id="S1">
+<button class="bk" onclick="exitLobby()">← Geri</button>
+<div class="code-show">
+<div class="lb">Oda Kodun</div>
+<div class="cd" id="dCode">----</div>
+<div class="wt" id="wTxt">⏳ Rakip bekleniyor...</div>
+</div>
+<div id="stBox" style="display:none">
+<p class="jt" id="jTxt">✅ Rakip katıldı!</p>
+<button class="btn btn-gr" onclick="startGame()">🎮 Oyunu Başlat</button>
+</div>
 </div>
 
-<!-- Firebase Compat SDK (daha stabil, tek dosya) -->
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<!-- JOIN -->
+<div class="scr" id="S2">
+<button class="bk" onclick="sw('S0')">← Geri</button>
+<div class="inp">
+<label>Oda Kodu (4 Haneli)</label>
+<input type="text" id="inpCode" placeholder="1234" maxlength="4" inputmode="numeric">
+</div>
+<div class="err" id="jErr"></div>
+<button class="btn btn-g" onclick="joinRoom()" style="margin-top:10px">🚪 Katıl</button>
+</div>
 
+<!-- WAIT P2 -->
+<div class="scr" id="S3">
+<button class="bk" onclick="exitP2()">← Geri</button>
+<div class="code-show">
+<div class="lb">Oda</div>
+<div class="cd" id="dCode2">----</div>
+<div class="wt">⏳ Kurucu oyunu başlatacak...</div>
+</div>
+</div>
+
+<!-- GAME -->
+<div class="scr" id="S4">
+<div class="gbar">
+<div class="pc c1" id="pc1"><div class="nn" id="gn1">P1</div><div class="sc" id="gs1">0</div><div class="si">◆ SIRA</div></div>
+<div class="pc c2" id="pc2"><div class="nn" id="gn2">P2</div><div class="sc" id="gs2">0</div><div class="si">◆ SIRA</div></div>
+</div>
+<div class="tb my" id="tBar">Sıra sizde!</div>
+<div class="sts">
+<div>💰 <span id="xG">0</span></div>
+<div>💣 <span id="xT">0</span></div>
+<div>📦 <span id="xL">0</span></div>
+</div>
+<div class="grid" id="GR"></div>
+<button class="btn btn-r btn-s" onclick="quitGame()" style="margin-top:10px">🚪 Ayrıl</button>
+</div>
+</div>
+
+<!-- FIREBASE COMPAT -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script>
-// ========== FIREBASE INIT ==========
-const firebaseConfig = {
-    apiKey: "AIzaSyDXgndR3i2p0ovRXVxqGb24d7lMXdTTX9I",
-    authDomain: "mobilgame1-f03ac.firebaseapp.com",
-    databaseURL: "https://mobilgame1-f03ac-default-rtdb.firebaseio.com",
-    projectId: "mobilgame1-f03ac",
-    storageBucket: "mobilgame1-f03ac.firebasestorage.app",
-    messagingSenderId: "188464433527",
-    appId: "1:188464433527:web:baed82070bfed9652df972",
-    measurementId: "G-0G2FXDPVKM"
-};
+(function(){
 
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+// ===== FIREBASE =====
+var app, db, connected = false;
 
-// ========== CONSTANTS ==========
-const GS = 8;
-const TC = GS * GS;
-const GOLDS = 16;
-const TRAPS = 10;
-
-// ========== STATE ==========
-let roomCode = null;
-let role = null; // 'p1' | 'p2'
-let unsub = null; // listener off function
-let gState = null;
-let busy = false;
-const myId = 'u' + Math.random().toString(36).substr(2, 8);
-
-// ========== HELPERS ==========
-function rCode() {
-    return String(Math.floor(1000 + Math.random() * 9000));
+try {
+    app = firebase.initializeApp({
+        apiKey: "AIzaSyDXgndR3i2p0ovRXVxqGb24d7lMXdTTX9I",
+        authDomain: "mobilgame1-f03ac.firebaseapp.com",
+        databaseURL: "https://mobilgame1-f03ac-default-rtdb.firebaseio.com",
+        projectId: "mobilgame1-f03ac",
+        storageBucket: "mobilgame1-f03ac.firebasestorage.app",
+        messagingSenderId: "188464433527",
+        appId: "1:188464433527:web:baed82070bfed9652df972"
+    });
+    db = firebase.database();
+} catch(e) {
+    sts('no', '❌ Firebase başlatılamadı: ' + e.message);
 }
 
-function makeBoard() {
-    const b = new Array(TC).fill('empty');
-    const idx = [...Array(TC).keys()];
-    for (let i = idx.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [idx[i], idx[j]] = [idx[j], idx[i]];
+// Connection check
+if(db){
+    db.ref('.info/connected').on('value', function(snap){
+        if(snap.val() === true){
+            connected = true;
+            sts('ok','✅ Firebase bağlı — Hazır!');
+            document.getElementById('btnCrt').disabled = false;
+            document.getElementById('btnJnP').disabled = false;
+        } else {
+            connected = false;
+            sts('no','❌ Firebase bağlantısı yok');
+            document.getElementById('btnCrt').disabled = true;
+            document.getElementById('btnJnP').disabled = true;
+        }
+    });
+
+    // Timeout fallback - 5sn sonra hala bağlanmadıysa test yaz
+    setTimeout(function(){
+        if(!connected){
+            sts('no','❌ Bağlantı zaman aşımı. Database URL veya Rules kontrol edin.');
+        }
+    }, 6000);
+}
+
+function sts(cls, txt){
+    var el = document.getElementById('status');
+    el.className = cls;
+    el.textContent = txt;
+}
+
+// ===== CONSTS =====
+var GS=8, TC=64, NG=16, NT=10;
+
+// ===== STATE =====
+var room=null, role=null, gst=null, busy=false, listeners=[];
+var uid = 'u'+Math.random().toString(36).substr(2,8);
+
+// ===== UTIL =====
+function rc(){return String(1000+Math.floor(Math.random()*9000))}
+
+function mkBoard(){
+    var b=[];
+    for(var i=0;i<TC;i++) b.push('empty');
+    var idx=[];
+    for(var i=0;i<TC;i++) idx.push(i);
+    for(var i=idx.length-1;i>0;i--){
+        var j=Math.floor(Math.random()*(i+1));
+        var t=idx[i];idx[i]=idx[j];idx[j]=t;
     }
-    for (let i = 0; i < GOLDS; i++) b[idx[i]] = 'gold';
-    for (let i = GOLDS; i < GOLDS + TRAPS; i++) b[idx[i]] = 'trap';
+    for(var i=0;i<NG;i++) b[idx[i]]='gold';
+    for(var i=NG;i<NG+NT;i++) b[idx[i]]='trap';
     return b;
 }
 
-function pName() {
-    const v = document.getElementById('nameIn').value.trim();
-    return v || ('Oyuncu' + Math.floor(Math.random() * 99));
+function gn(){
+    var v=document.getElementById('inpName').value.trim();
+    return v||('Oyuncu'+Math.floor(Math.random()*99));
 }
 
-function goScreen(id) {
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    document.getElementById(id).classList.add('active');
+function sw(id){
+    var all=document.querySelectorAll('.scr');
+    for(var i=0;i<all.length;i++) all[i].classList.remove('on');
+    document.getElementById(id).classList.add('on');
 }
 
-function toast(msg, type) {
-    const c = document.getElementById('TB');
-    const t = document.createElement('div');
-    t.className = 'toast t' + type;
-    t.textContent = msg;
-    c.appendChild(t);
-    requestAnimationFrame(() => t.classList.add('show'));
-    setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, 2200);
+function toast(m,t){
+    var c=document.getElementById('TB');
+    var d=document.createElement('div');
+    d.className='tst t'+t;
+    d.textContent=m;
+    c.appendChild(d);
+    setTimeout(function(){d.classList.add('sh')},10);
+    setTimeout(function(){d.classList.remove('sh');setTimeout(function(){d.remove()},300)},2200);
 }
 
-function killListener() {
-    if (unsub) { unsub(); unsub = null; }
+function offAll(){
+    for(var i=0;i<listeners.length;i++){
+        try{listeners[i]()}catch(e){}
+    }
+    listeners=[];
 }
 
-function fullClean() {
-    killListener();
-    roomCode = null;
-    role = null;
-    gState = null;
-    busy = false;
-    document.getElementById('gGrid').innerHTML = '';
-    document.getElementById('codeIn').value = '';
-    document.getElementById('joinErr').textContent = '';
+function clean(){
+    offAll();
+    room=null;role=null;gst=null;busy=false;
+    document.getElementById('GR').innerHTML='';
+    document.getElementById('inpCode').value='';
+    document.getElementById('jErr').textContent='';
     document.getElementById('resOv').classList.remove('on');
 }
 
-// ========== CREATE ROOM ==========
-async function doCreate() {
-    const name = pName();
-    document.getElementById('nameIn').value = name;
-    const code = rCode();
-    roomCode = code;
-    role = 'p1';
+// ===== CREATE =====
+window.createRoom = function(){
+    if(!connected){toast('Firebase bağlı değil!','t');return;}
+    var name=gn();
+    document.getElementById('inpName').value=name;
+    var code=rc();
+    room=code; role='p1';
 
-    try {
-        await db.ref('rooms/' + code).set({
-            code: code,
-            status: 'waiting',
-            p1: { name: name, id: myId, score: 0 },
-            p2: null,
-            board: null,
-            revealed: null,
-            turn: 'p1',
-            ts: firebase.database.ServerValue.TIMESTAMP
-        });
+    var ref=db.ref('rooms/'+code);
+    ref.set({
+        status:'waiting',
+        p1:{name:name,score:0},
+        p2:null,
+        board:null,
+        revealed:null,
+        turn:'p1',
+        ts: firebase.database.ServerValue.TIMESTAMP
+    }).then(function(){
+        ref.onDisconnect().remove();
+        document.getElementById('dCode').textContent=code;
+        document.getElementById('wTxt').style.display='';
+        document.getElementById('stBox').style.display='none';
+        sw('S1');
 
-        // Disconnect cleanup
-        db.ref('rooms/' + code).onDisconnect().remove();
-
-        document.getElementById('dispCode').textContent = code;
-        document.getElementById('waitTxt').style.display = '';
-        document.getElementById('startBox').style.display = 'none';
-        goScreen('scLobby');
-
-        // Listen
-        killListener();
-        const ref = db.ref('rooms/' + code);
-        const cb = ref.on('value', snap => {
-            const d = snap.val();
-            if (!d) return;
-
-            // P2 joined
-            if (d.p2 && d.status === 'waiting') {
-                document.getElementById('waitTxt').style.display = 'none';
-                document.getElementById('joinedTxt').textContent = '✅ ' + d.p2.name + ' katıldı!';
-                document.getElementById('startBox').style.display = '';
+        // Listen for p2
+        var cb = ref.on('value', function(snap){
+            var d=snap.val();
+            if(!d) return;
+            if(d.p2 && d.status==='waiting'){
+                document.getElementById('wTxt').style.display='none';
+                document.getElementById('jTxt').textContent='✅ '+d.p2.name+' katıldı!';
+                document.getElementById('stBox').style.display='';
             }
-
-            // Game started
-            if (d.status === 'playing' || d.status === 'finished') {
-                gState = d;
-                goScreen('scGame');
+            if(d.status==='playing'||d.status==='finished'){
+                gst=d;
+                ref.off('value',cb);
+                sw('S4');
                 render(d);
-                // Switch to game listener
-                ref.off('value', cb);
-                listenGame();
+                listenG();
             }
         });
-        unsub = () => ref.off('value', cb);
+        listeners.push(function(){ref.off('value',cb)});
 
-    } catch (e) {
+    }).catch(function(e){
+        toast('Hata: '+e.message,'t');
         console.error(e);
-        toast('Oda oluşturulamadı! Firebase bağlantısını kontrol edin.', 't');
-    }
-}
-
-// ========== JOIN ROOM ==========
-async function doJoin() {
-    const code = document.getElementById('codeIn').value.trim();
-    const name = pName();
-    document.getElementById('nameIn').value = name;
-    const errEl = document.getElementById('joinErr');
-
-    if (code.length !== 4) { errEl.textContent = '4 haneli kod girin.'; return; }
-
-    try {
-        const snap = await db.ref('rooms/' + code).once('value');
-        if (!snap.exists()) { errEl.textContent = 'Oda bulunamadı.'; return; }
-        const d = snap.val();
-        if (d.status !== 'waiting') { errEl.textContent = 'Oyun zaten başlamış.'; return; }
-        if (d.p2) { errEl.textContent = 'Oda dolu.'; return; }
-
-        roomCode = code;
-        role = 'p2';
-        errEl.textContent = '';
-
-        await db.ref('rooms/' + code + '/p2').set({ name: name, id: myId, score: 0 });
-
-        document.getElementById('dispCode2').textContent = code;
-        goScreen('scWaitP2');
-        toast('Katıldın! Kurucu başlatacak.', 'i');
-
-        // Listen for game start
-        killListener();
-        const ref = db.ref('rooms/' + code);
-        const cb = ref.on('value', snap2 => {
-            const d2 = snap2.val();
-            if (!d2) {
-                toast('Oda silindi!', 't');
-                fullClean();
-                goScreen('scMenu');
-                return;
-            }
-            if (d2.status === 'playing' || d2.status === 'finished') {
-                gState = d2;
-                goScreen('scGame');
-                render(d2);
-                ref.off('value', cb);
-                listenGame();
-            }
-        });
-        unsub = () => ref.off('value', cb);
-
-    } catch (e) {
-        console.error(e);
-        errEl.textContent = 'Bağlantı hatası!';
-    }
-}
-
-// ========== START GAME ==========
-async function doStart() {
-    if (role !== 'p1' || !roomCode) return;
-    const board = makeBoard();
-    await db.ref('rooms/' + roomCode).update({
-        status: 'playing',
-        board: board,
-        revealed: {},
-        turn: 'p1',
-        'p1/score': 0,
-        'p2/score': 0
     });
-}
+};
 
-// ========== GAME LISTENER ==========
-function listenGame() {
-    killListener();
-    const ref = db.ref('rooms/' + roomCode);
-    const cb = ref.on('value', snap => {
-        const d = snap.val();
-        if (!d) {
-            toast('Oda kapandı.', 't');
-            fullClean();
-            goScreen('scMenu');
+// ===== JOIN =====
+window.joinRoom = function(){
+    if(!connected){toast('Firebase bağlı değil!','t');return;}
+    var code=document.getElementById('inpCode').value.trim();
+    var name=gn();
+    document.getElementById('inpName').value=name;
+    var err=document.getElementById('jErr');
+
+    if(code.length!==4){err.textContent='4 haneli kod girin.';return;}
+
+    var ref=db.ref('rooms/'+code);
+    ref.once('value').then(function(snap){
+        if(!snap.exists()){err.textContent='Oda bulunamadı.';return;}
+        var d=snap.val();
+        if(d.status!=='waiting'){err.textContent='Oyun zaten başlamış.';return;}
+        if(d.p2){err.textContent='Oda dolu.';return;}
+
+        room=code; role='p2'; err.textContent='';
+
+        ref.child('p2').set({name:name,score:0}).then(function(){
+            document.getElementById('dCode2').textContent=code;
+            sw('S3');
+            toast('Katıldın! Kurucu başlatacak.','i');
+
+            var cb=ref.on('value',function(snap2){
+                var d2=snap2.val();
+                if(!d2){
+                    toast('Oda silindi!','t');
+                    clean(); sw('S0');
+                    return;
+                }
+                if(d2.status==='playing'||d2.status==='finished'){
+                    gst=d2;
+                    ref.off('value',cb);
+                    sw('S4');
+                    render(d2);
+                    listenG();
+                }
+            });
+            listeners.push(function(){ref.off('value',cb)});
+
+        }).catch(function(e){
+            err.textContent='Hata: '+e.message;
+        });
+    }).catch(function(e){
+        err.textContent='Bağlantı hatası: '+e.message;
+    });
+};
+
+// ===== START =====
+window.startGame = function(){
+    if(role!=='p1'||!room) return;
+    var board=mkBoard();
+    db.ref('rooms/'+room).update({
+        status:'playing',
+        board:board,
+        revealed:{},
+        turn:'p1',
+        'p1/score':0,
+        'p2/score':0
+    }).catch(function(e){
+        toast('Başlatma hatası: '+e.message,'t');
+    });
+};
+
+// ===== GAME LISTENER =====
+function listenG(){
+    offAll();
+    var ref=db.ref('rooms/'+room);
+    var cb=ref.on('value',function(snap){
+        var d=snap.val();
+        if(!d){
+            toast('Oda kapandı.','t');
+            clean(); sw('S0');
             return;
         }
-        gState = d;
+        gst=d;
         render(d);
-        if (d.status === 'finished') showResult(d);
+        if(d.status==='finished') showRes(d);
     });
-    unsub = () => ref.off('value', cb);
+    listeners.push(function(){ref.off('value',cb)});
 }
 
-// ========== RENDER ==========
-function render(d) {
-    if (!d || d.status === 'waiting') return;
+// ===== RENDER =====
+function render(d){
+    if(!d||d.status==='waiting') return;
 
-    // Names & scores
-    document.getElementById('gn1').textContent = (d.p1?.name || 'P1') + (role === 'p1' ? ' (Sen)' : '');
-    document.getElementById('gn2').textContent = (d.p2?.name || 'P2') + (role === 'p2' ? ' (Sen)' : '');
-    document.getElementById('gs1').textContent = d.p1?.score ?? 0;
-    document.getElementById('gs2').textContent = d.p2?.score ?? 0;
+    document.getElementById('gn1').textContent=(d.p1?d.p1.name:'P1')+(role==='p1'?' (Sen)':'');
+    document.getElementById('gn2').textContent=(d.p2?d.p2.name:'P2')+(role==='p2'?' (Sen)':'');
+    document.getElementById('gs1').textContent=d.p1?d.p1.score:0;
+    document.getElementById('gs2').textContent=d.p2?d.p2.score:0;
 
-    // Active turn cards
-    document.getElementById('pc1').classList.toggle('on', d.turn === 'p1');
-    document.getElementById('pc2').classList.toggle('on', d.turn === 'p2');
+    var pc1=document.getElementById('pc1');
+    var pc2=document.getElementById('pc2');
+    if(d.turn==='p1'){pc1.classList.add('act');pc2.classList.remove('act')}
+    else{pc2.classList.add('act');pc1.classList.remove('act')}
 
-    // Turn bar
-    const tb = document.getElementById('turnBar');
-    if (d.status === 'finished') {
-        tb.textContent = '🏁 Oyun Bitti!';
-        tb.className = 'turn-bar op';
-    } else if (d.turn === role) {
-        tb.textContent = '🎯 Sıra sizde! Bir kare seçin.';
-        tb.className = 'turn-bar my';
-    } else {
-        tb.textContent = '⏳ Rakibin oynuyor...';
-        tb.className = 'turn-bar op';
+    var tb=document.getElementById('tBar');
+    if(d.status==='finished'){
+        tb.textContent='🏁 Oyun Bitti!';tb.className='tb op';
+    }else if(d.turn===role){
+        tb.textContent='🎯 Sıra sizde! Bir kare seçin.';tb.className='tb my';
+    }else{
+        tb.textContent='⏳ Rakibin oynuyor...';tb.className='tb op';
     }
 
-    // Stats
-    const rev = d.revealed || {};
-    const rVals = Object.values(rev);
-    const gF = rVals.filter(v => v === 'gold').length;
-    const tF = rVals.filter(v => v === 'trap').length;
-    document.getElementById('stGold').textContent = GOLDS - gF;
-    document.getElementById('stTrap').textContent = TRAPS - tF;
-    document.getElementById('stLeft').textContent = TC - rVals.length;
+    var rev=d.revealed||{};
+    var rk=Object.keys(rev);
+    var gf=0,tf=0;
+    for(var i=0;i<rk.length;i++){
+        if(rev[rk[i]]==='gold')gf++;
+        if(rev[rk[i]]==='trap')tf++;
+    }
+    document.getElementById('xG').textContent=NG-gf;
+    document.getElementById('xT').textContent=NT-tf;
+    document.getElementById('xL').textContent=TC-rk.length;
 
-    // Grid
-    renderGrid(d);
+    rGrid(d);
 }
 
-function renderGrid(d) {
-    const con = document.getElementById('gGrid');
-    const rev = d.revealed || {};
+function rGrid(d){
+    var con=document.getElementById('GR');
+    var rev=d.revealed||{};
 
-    if (con.children.length !== TC) {
-        con.innerHTML = '';
-        for (let i = 0; i < TC; i++) {
-            const c = document.createElement('button');
-            c.className = 'cell';
-            c.dataset.i = i;
-            const sp = document.createElement('span');
-            sp.className = 'cc';
-            c.appendChild(sp);
-            c.addEventListener('click', () => cellClick(i));
+    if(con.children.length!==TC){
+        con.innerHTML='';
+        for(var i=0;i<TC;i++){
+            var c=document.createElement('button');
+            c.className='cl';
+            c.setAttribute('data-i',i);
+            var s=document.createElement('span');
+            s.className='cc';
+            c.appendChild(s);
+            (function(idx){
+                c.addEventListener('click',function(){cellTap(idx)});
+            })(i);
             con.appendChild(c);
         }
     }
 
-    for (let i = 0; i < TC; i++) {
-        const c = con.children[i];
-        const sp = c.querySelector('.cc');
-        const k = String(i);
+    for(var i=0;i<TC;i++){
+        var c=con.children[i];
+        var s=c.querySelector('.cc');
+        var k=''+i;
 
-        if (rev[k]) {
-            if (!c.classList.contains('rev')) {
-                c.classList.add('rev', 'pop');
-                setTimeout(() => c.classList.remove('pop'), 300);
+        if(rev[k]){
+            if(!c.classList.contains('rv')){
+                c.classList.add('rv','pp');
+                setTimeout((function(el){return function(){el.classList.remove('pp')}})(c),300);
             }
-            c.classList.remove('gold', 'trap', 'empty');
+            c.classList.remove('gold','trap','empty');
             c.classList.add(rev[k]);
-            sp.textContent = rev[k] === 'gold' ? '💰' : rev[k] === 'trap' ? '💣' : '·';
-            c.classList.add('dis');
-        } else {
-            c.classList.remove('rev', 'gold', 'trap', 'empty', 'dis', 'pop');
-            sp.textContent = '';
-            if (d.status === 'finished' || d.turn !== role) {
-                c.classList.add('dis');
-            } else {
-                c.classList.remove('dis');
+            s.textContent=rev[k]==='gold'?'💰':rev[k]==='trap'?'💣':'·';
+            c.classList.add('ds');
+        }else{
+            c.classList.remove('rv','gold','trap','empty','ds','pp');
+            s.textContent='';
+            if(d.status==='finished'||d.turn!==role){
+                c.classList.add('ds');
+            }else{
+                c.classList.remove('ds');
             }
         }
     }
 }
 
-// ========== CELL CLICK ==========
-async function cellClick(i) {
-    if (busy) return;
-    if (!gState || gState.status !== 'playing') return;
-    if (gState.turn !== role) { toast('Sıra rakipte!', 'i'); return; }
-    const rev = gState.revealed || {};
-    if (rev[String(i)]) return;
+// ===== CELL TAP =====
+function cellTap(i){
+    if(busy)return;
+    if(!gst||gst.status!=='playing')return;
+    if(gst.turn!==role){toast('Sıra rakipte!','i');return;}
+    var rev=gst.revealed||{};
+    if(rev[''+i])return;
 
-    busy = true;
+    busy=true;
 
-    const board = gState.board;
-    const ct = board[i];
-    let sc = gState[role]?.score ?? 0;
-    let nt = role === 'p1' ? 'p2' : 'p1';
+    var board=gst.board;
+    var ct=board[i];
+    var sc=gst[role]?gst[role].score:0;
+    var nt=role==='p1'?'p2':'p1';
 
-    if (ct === 'gold') {
-        sc += 10;
-        nt = role; // extra turn
-        toast('+10 Altın! Tekrar oyna! 🪙', 'g');
-    } else if (ct === 'trap') {
-        sc = Math.max(0, sc - 5);
-        toast('-5 Tuzak! Sıra rakipte. 💥', 't');
-    } else {
-        toast('Boş kare. Sıra rakipte.', 'i');
+    if(ct==='gold'){
+        sc+=10;
+        nt=role;
+        toast('+10 Altın! Tekrar oyna! 🪙','g');
+    }else if(ct==='trap'){
+        sc=Math.max(0,sc-5);
+        toast('-5 Tuzak! Sıra rakipte. 💥','t');
+    }else{
+        toast('Boş kare. Sıra rakipte.','i');
     }
 
-    const upd = {};
-    upd['revealed/' + i] = ct;
-    upd[role + '/score'] = sc;
-    upd['turn'] = nt;
+    var upd={};
+    upd['revealed/'+i]=ct;
+    upd[role+'/score']=sc;
+    upd['turn']=nt;
 
-    const revCount = Object.keys(rev).length + 1;
-    if (revCount >= TC) {
-        upd['status'] = 'finished';
-    }
+    var rc2=Object.keys(rev).length+1;
+    if(rc2>=TC) upd['status']='finished';
 
-    try {
-        await db.ref('rooms/' + roomCode).update(upd);
-    } catch (e) {
-        console.error(e);
-        toast('Bağlantı hatası!', 't');
-    }
-
-    busy = false;
+    db.ref('rooms/'+room).update(upd).then(function(){
+        busy=false;
+    }).catch(function(e){
+        toast('Hata: '+e.message,'t');
+        busy=false;
+    });
 }
 
-// ========== RESULT ==========
-function showResult(d) {
-    const s1 = d.p1?.score ?? 0;
-    const s2 = d.p2?.score ?? 0;
-    document.getElementById('rs1').textContent = s1;
-    document.getElementById('rs2').textContent = s2;
-    document.getElementById('rn1').textContent = d.p1?.name || 'P1';
-    document.getElementById('rn2').textContent = d.p2?.name || 'P2';
+// ===== RESULT =====
+function showRes(d){
+    var s1=d.p1?d.p1.score:0;
+    var s2=d.p2?d.p2.score:0;
+    document.getElementById('rs1').textContent=s1;
+    document.getElementById('rs2').textContent=s2;
+    document.getElementById('rn1').textContent=d.p1?d.p1.name:'P1';
+    document.getElementById('rn2').textContent=d.p2?d.p2.name:'P2';
 
-    const my = role === 'p1' ? s1 : s2;
-    const op = role === 'p1' ? s2 : s1;
+    var my=role==='p1'?s1:s2;
+    var op=role==='p1'?s2:s1;
 
-    if (my > op) {
-        document.getElementById('resIco').textContent = '🏆';
-        document.getElementById('resT').textContent = 'Kazandınız!';
-        document.getElementById('resT').style.color = '#ffd700';
-        document.getElementById('resSub').textContent = 'Tebrikler, hazine avcısı!';
-        confetti();
-    } else if (my < op) {
-        document.getElementById('resIco').textContent = '😢';
-        document.getElementById('resT').textContent = 'Kaybettiniz';
-        document.getElementById('resT').style.color = '#e74c3c';
-        document.getElementById('resSub').textContent = 'Bir dahaki sefere!';
-    } else {
-        document.getElementById('resIco').textContent = '🤝';
-        document.getElementById('resT').textContent = 'Berabere!';
-        document.getElementById('resT').style.color = '#3498db';
-        document.getElementById('resSub').textContent = 'İkiniz de harikasınız!';
+    if(my>op){
+        document.getElementById('rIco').textContent='🏆';
+        document.getElementById('rTit').textContent='Kazandınız!';
+        document.getElementById('rTit').style.color='#ffd700';
+        document.getElementById('rSub').textContent='Tebrikler, hazine avcısı!';
+        doCft();
+    }else if(my<op){
+        document.getElementById('rIco').textContent='😢';
+        document.getElementById('rTit').textContent='Kaybettiniz';
+        document.getElementById('rTit').style.color='#e74c3c';
+        document.getElementById('rSub').textContent='Bir dahaki sefere!';
+    }else{
+        document.getElementById('rIco').textContent='🤝';
+        document.getElementById('rTit').textContent='Berabere!';
+        document.getElementById('rTit').style.color='#3498db';
+        document.getElementById('rSub').textContent='İkiniz de harikasınız!';
     }
-
     document.getElementById('resOv').classList.add('on');
 }
 
-// ========== CONFETTI ==========
-function confetti() {
-    const cols = ['#ffd700', '#e74c3c', '#3498db', '#2ecc71', '#9b59b6', '#e67e22'];
-    for (let i = 0; i < 55; i++) {
-        const p = document.createElement('div');
-        p.className = 'confetti';
-        p.style.left = Math.random() * 100 + 'vw';
-        p.style.top = '-12px';
-        p.style.background = cols[Math.floor(Math.random() * cols.length)];
-        p.style.width = (5 + Math.random() * 7) + 'px';
-        p.style.height = (5 + Math.random() * 7) + 'px';
-        if (Math.random() > 0.5) p.style.borderRadius = '50%';
+function doCft(){
+    var cols=['#ffd700','#e74c3c','#3498db','#2ecc71','#9b59b6','#e67e22'];
+    for(var i=0;i<50;i++){
+        var p=document.createElement('div');
+        p.className='cft';
+        p.style.left=Math.random()*100+'vw';
+        p.style.top='-12px';
+        p.style.background=cols[Math.floor(Math.random()*cols.length)];
+        p.style.width=(5+Math.random()*7)+'px';
+        p.style.height=(5+Math.random()*7)+'px';
+        if(Math.random()>.5) p.style.borderRadius='50%';
         document.body.appendChild(p);
-        const dur = 1400 + Math.random() * 2000;
-        const xd = (Math.random() - 0.5) * 220;
-        const rot = Math.random() * 720;
+        var dur=1400+Math.random()*2000;
+        var xd=(Math.random()-.5)*220;
+        var rot=Math.random()*720;
         p.animate([
-            { transform: 'translateY(0) translateX(0) rotate(0deg)', opacity: 1 },
-            { transform: `translateY(${window.innerHeight + 30}px) translateX(${xd}px) rotate(${rot}deg)`, opacity: 0 }
-        ], { duration: dur, easing: 'ease-out' }).onfinish = () => p.remove();
+            {transform:'translateY(0) translateX(0) rotate(0deg)',opacity:1},
+            {transform:'translateY('+window.innerHeight+'px) translateX('+xd+'px) rotate('+rot+'deg)',opacity:0}
+        ],{duration:dur,easing:'ease-out'}).onfinish=function(){this.effect.target.remove()};
     }
 }
 
-// ========== LEAVE / BACK ==========
-async function leaveLobby() {
-    if (roomCode) {
-        try { await db.ref('rooms/' + roomCode).remove(); } catch (e) {}
-    }
-    fullClean();
-    goScreen('scMenu');
-}
+// ===== LEAVE =====
+window.exitLobby=function(){
+    if(room){try{db.ref('rooms/'+room).remove()}catch(e){}}
+    clean(); sw('S0');
+};
 
-async function leaveAsP2() {
-    if (roomCode) {
-        try { await db.ref('rooms/' + roomCode + '/p2').remove(); } catch (e) {}
-    }
-    fullClean();
-    goScreen('scMenu');
-}
+window.exitP2=function(){
+    if(room){try{db.ref('rooms/'+room+'/p2').remove()}catch(e){}}
+    clean(); sw('S0');
+};
 
-async function leaveGame() {
-    if (roomCode) {
-        try { await db.ref('rooms/' + roomCode).remove(); } catch (e) {}
-    }
-    fullClean();
-    toast('Oyundan ayrıldınız.', 'i');
-    goScreen('scMenu');
-}
+window.quitGame=function(){
+    if(room){try{db.ref('rooms/'+room).remove()}catch(e){}}
+    clean(); toast('Ayrıldınız.','i'); sw('S0');
+};
 
-function backMenu() {
+window.goMenu=function(){
     document.getElementById('resOv').classList.remove('on');
-    if (roomCode) {
-        try { db.ref('rooms/' + roomCode).remove(); } catch (e) {}
-    }
-    fullClean();
-    goScreen('scMenu');
-}
+    if(room){try{db.ref('rooms/'+room).remove()}catch(e){}}
+    clean(); sw('S0');
+};
 
-// ========== CLEAN OLD ROOMS ==========
-(async function cleanOld() {
-    try {
-        const snap = await db.ref('rooms').once('value');
-        if (snap.exists()) {
-            const rooms = snap.val();
-            const now = Date.now();
-            for (const [c, r] of Object.entries(rooms)) {
-                if (r.ts && now - r.ts > 30 * 60 * 1000) {
-                    db.ref('rooms/' + c).remove();
-                }
+// ===== CLEAN OLD =====
+if(db){
+    db.ref('rooms').once('value').then(function(snap){
+        if(!snap.exists()) return;
+        var rooms=snap.val();
+        var now=Date.now();
+        for(var c in rooms){
+            if(rooms[c].ts && now-rooms[c].ts>30*60*1000){
+                db.ref('rooms/'+c).remove();
             }
         }
-    } catch (e) {}
+    }).catch(function(){});
+}
+
 })();
-
-// ========== EXPOSE TO GLOBAL ==========
-window.doCreate = doCreate;
-window.doJoin = doJoin;
-window.doStart = doStart;
-window.goScreen = goScreen;
-window.leaveLobby = leaveLobby;
-window.leaveAsP2 = leaveAsP2;
-window.leaveGame = leaveGame;
-window.backMenu = backMenu;
 </script>
-
 </body>
 </html>
