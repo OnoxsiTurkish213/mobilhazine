@@ -176,97 +176,85 @@ body{font-family:'Inter',sans-serif;background:#0b0b12;color:#e0e0e0;min-height:
 </div>
 
 <script>
-// ========================================
-// FIREBASE - REST API ILE (SDK YOK)
-// Bu yontem %100 calismasi garanti
-// ========================================
+// =============================================
+// DOĞRU DATABASE URL - EUROPE WEST1
+// =============================================
+var DB_URL = "https://mobilgame1-f03ac-default-rtdb.europe-west1.firebasedatabase.app";
 
-var DB_URL = "https://mobilgame1-f03ac-default-rtdb.firebaseio.com";
 var GS = 8, TC = 64, NG = 16, NT = 10;
 var room = null, role = null, gst = null, busy = false;
 var pollTimer = null;
 
-// ===== REST HELPERS =====
 function dbWrite(path, data, cb) {
-    var xhr = new XMLHttpRequest();
-    xhr.open("PUT", DB_URL + "/" + path + ".json", true);
-    xhr.setRequestHeader("Content-Type", "application/json");
-    xhr.onreadystatechange = function() {
-        if (xhr.readyState === 4) {
-            if (cb) cb(xhr.status === 200, xhr.responseText);
-        }
+    var x = new XMLHttpRequest();
+    x.open("PUT", DB_URL + "/" + path + ".json", true);
+    x.setRequestHeader("Content-Type", "application/json");
+    x.onreadystatechange = function() {
+        if (x.readyState === 4) { if (cb) cb(x.status === 200); }
     };
-    xhr.onerror = function() { if (cb) cb(false, "network error"); };
-    xhr.send(JSON.stringify(data));
+    x.onerror = function() { if (cb) cb(false); };
+    x.send(JSON.stringify(data));
 }
 
 function dbUpdate(path, data, cb) {
-    var xhr = new XMLHttpRequest();
-    xhr.open("PATCH", DB_URL + "/" + path + ".json", true);
-    xhr.setRequestHeader("Content-Type", "application/json");
-    xhr.onreadystatechange = function() {
-        if (xhr.readyState === 4) {
-            if (cb) cb(xhr.status === 200, xhr.responseText);
-        }
+    var x = new XMLHttpRequest();
+    x.open("PATCH", DB_URL + "/" + path + ".json", true);
+    x.setRequestHeader("Content-Type", "application/json");
+    x.onreadystatechange = function() {
+        if (x.readyState === 4) { if (cb) cb(x.status === 200); }
     };
-    xhr.onerror = function() { if (cb) cb(false, "network error"); };
-    xhr.send(JSON.stringify(data));
+    x.onerror = function() { if (cb) cb(false); };
+    x.send(JSON.stringify(data));
 }
 
 function dbRead(path, cb) {
-    var xhr = new XMLHttpRequest();
-    xhr.open("GET", DB_URL + "/" + path + ".json", true);
-    xhr.onreadystatechange = function() {
-        if (xhr.readyState === 4) {
-            if (xhr.status === 200) {
-                try { cb(true, JSON.parse(xhr.responseText)); }
+    var x = new XMLHttpRequest();
+    x.open("GET", DB_URL + "/" + path + ".json", true);
+    x.onreadystatechange = function() {
+        if (x.readyState === 4) {
+            if (x.status === 200) {
+                try { cb(true, JSON.parse(x.responseText)); }
                 catch(e) { cb(false, null); }
-            } else {
-                cb(false, null);
-            }
+            } else { cb(false, null); }
         }
     };
-    xhr.onerror = function() { cb(false, null); };
-    xhr.send();
+    x.onerror = function() { cb(false, null); };
+    x.send();
 }
 
 function dbDelete(path, cb) {
-    var xhr = new XMLHttpRequest();
-    xhr.open("DELETE", DB_URL + "/" + path + ".json", true);
-    xhr.onreadystatechange = function() {
-        if (xhr.readyState === 4) { if (cb) cb(xhr.status === 200); }
+    var x = new XMLHttpRequest();
+    x.open("DELETE", DB_URL + "/" + path + ".json", true);
+    x.onreadystatechange = function() {
+        if (x.readyState === 4) { if (cb) cb(x.status === 200); }
     };
-    xhr.onerror = function() { if (cb) cb(false); };
-    xhr.send();
+    x.onerror = function() { if (cb) cb(false); };
+    x.send();
 }
 
-// ===== CONNECTION TEST =====
 function testConnection() {
     setStatus("wt", "🔄 Firebase test ediliyor...");
-    dbWrite("_test", { t: Date.now() }, function(ok) {
+    dbWrite("_test", {t: Date.now()}, function(ok) {
         if (ok) {
             dbDelete("_test");
             setStatus("ok", "✅ Firebase bağlı — Hazır!");
             document.getElementById("btnC").disabled = false;
             document.getElementById("btnJ").disabled = false;
         } else {
-            setStatus("no", "❌ Firebase bağlantısı başarısız! Rules kontrol edin.");
+            setStatus("no", "❌ Firebase bağlantısı başarısız!");
         }
     });
 }
 
-function setStatus(cls, txt) {
-    var el = document.getElementById("dbStatus");
-    el.className = cls;
-    el.textContent = txt;
+function setStatus(c, t) {
+    var e = document.getElementById("dbStatus");
+    e.className = c; e.textContent = t;
 }
 
-// ===== UTILS =====
 function rc() { return String(1000 + Math.floor(Math.random() * 9000)); }
 
 function mkBoard() {
-    var b = [];
-    var i;
+    var b = [], i;
     for (i = 0; i < TC; i++) b.push("empty");
     var idx = [];
     for (i = 0; i < TC; i++) idx.push(i);
@@ -285,8 +273,8 @@ function gn() {
 }
 
 function sw(id) {
-    var all = document.querySelectorAll(".scr");
-    for (var i = 0; i < all.length; i++) all[i].classList.remove("on");
+    var a = document.querySelectorAll(".scr");
+    for (var i = 0; i < a.length; i++) a[i].classList.remove("on");
     document.getElementById(id).classList.add("on");
 }
 
@@ -300,9 +288,7 @@ function toast(m, t) {
     setTimeout(function() { d.classList.remove("sh"); setTimeout(function() { d.remove(); }, 300); }, 2200);
 }
 
-function stopPoll() {
-    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
-}
+function stopPoll() { if (pollTimer) { clearInterval(pollTimer); pollTimer = null; } }
 
 function clean() {
     stopPoll();
@@ -313,53 +299,36 @@ function clean() {
     document.getElementById("resOv").classList.remove("on");
 }
 
-// ===== POLLING (her 1 saniye oda verisini oku) =====
-function startPoll(callback) {
+function startPoll(cb) {
     stopPoll();
-    function doPoll() {
+    function go() {
         if (!room) return;
-        dbRead("rooms/" + room, function(ok, data) {
-            if (ok) callback(data);
-        });
+        dbRead("rooms/" + room, function(ok, data) { if (ok) cb(data); });
     }
-    doPoll();
-    pollTimer = setInterval(doPoll, 1000);
+    go();
+    pollTimer = setInterval(go, 1000);
 }
 
-// ===== CREATE ROOM =====
 function createRoom() {
     var name = gn();
     document.getElementById("inpName").value = name;
     var code = rc();
-    room = code;
-    role = "p1";
+    room = code; role = "p1";
 
-    var roomData = {
+    dbWrite("rooms/" + code, {
         status: "waiting",
         p1: { name: name, score: 0 },
-        p2: null,
-        board: null,
-        revealed: null,
-        turn: "p1"
-    };
-
-    setStatus("wt", "🔄 Oda kuruluyor...");
-
-    dbWrite("rooms/" + code, roomData, function(ok) {
+        p2: null, board: null, revealed: null, turn: "p1"
+    }, function(ok) {
         if (!ok) {
             toast("Oda kurulamadı!", "t");
-            setStatus("no", "❌ Yazma hatası");
-            room = null; role = null;
-            return;
+            room = null; role = null; return;
         }
-
-        setStatus("ok", "✅ Bağlı");
         document.getElementById("dCode").textContent = code;
         document.getElementById("wTxt").style.display = "";
         document.getElementById("stBox").style.display = "none";
         sw("S1");
 
-        // Poll for p2 join & game start
         startPoll(function(data) {
             if (!data) return;
             if (data.p2 && data.status === "waiting") {
@@ -368,123 +337,86 @@ function createRoom() {
                 document.getElementById("stBox").style.display = "";
             }
             if (data.status === "playing" || data.status === "finished") {
-                gst = data;
-                stopPoll();
-                sw("S4");
-                render(data);
-                startGamePoll();
+                gst = data; stopPoll();
+                sw("S4"); render(data); startGamePoll();
             }
         });
     });
 }
 
-// ===== JOIN ROOM =====
 function joinRoom() {
     var code = document.getElementById("inpCode").value.trim();
     var name = gn();
     document.getElementById("inpName").value = name;
     var err = document.getElementById("jErr");
-
     if (code.length !== 4) { err.textContent = "4 haneli kod girin."; return; }
 
     dbRead("rooms/" + code, function(ok, data) {
         if (!ok || !data) { err.textContent = "Oda bulunamadı."; return; }
-        if (data.status !== "waiting") { err.textContent = "Oyun zaten başlamış."; return; }
+        if (data.status !== "waiting") { err.textContent = "Oyun başlamış."; return; }
         if (data.p2) { err.textContent = "Oda dolu."; return; }
 
-        room = code;
-        role = "p2";
-        err.textContent = "";
+        room = code; role = "p2"; err.textContent = "";
 
         dbUpdate("rooms/" + code, { p2: { name: name, score: 0 } }, function(ok2) {
             if (!ok2) { err.textContent = "Katılma hatası!"; room = null; role = null; return; }
 
             document.getElementById("dCode2").textContent = code;
             sw("S3");
-            toast("Katıldın! Kurucu başlatacak.", "i");
+            toast("Katıldın!", "i");
 
-            // Poll for game start
-            startPoll(function(data2) {
-                if (!data2) {
-                    toast("Oda silindi!", "t");
-                    clean(); sw("S0");
-                    return;
-                }
-                if (data2.status === "playing" || data2.status === "finished") {
-                    gst = data2;
-                    stopPoll();
-                    sw("S4");
-                    render(data2);
-                    startGamePoll();
+            startPoll(function(d) {
+                if (!d) { toast("Oda silindi!", "t"); clean(); sw("S0"); return; }
+                if (d.status === "playing" || d.status === "finished") {
+                    gst = d; stopPoll();
+                    sw("S4"); render(d); startGamePoll();
                 }
             });
         });
     });
 }
 
-// ===== START GAME =====
 function startGame() {
     if (role !== "p1" || !room) return;
     var board = mkBoard();
-    var upd = {
-        status: "playing",
-        board: board,
-        revealed: {},
-        turn: "p1",
-        "p1/score": 0,
-        "p2/score": 0
-    };
-    // revealed bos obje olarak ayri yazalim
-    dbUpdate("rooms/" + room, { status: "playing", board: board, turn: "p1" }, function(ok) {
-        if (!ok) { toast("Başlatma hatası!", "t"); return; }
+    dbWrite("rooms/" + room + "/board", board, function() {
         dbWrite("rooms/" + room + "/revealed", {}, function() {
-            dbUpdate("rooms/" + room + "/p1", { score: 0 }, function() {
-                dbUpdate("rooms/" + room + "/p2", { score: 0 }, function() {});
+            dbUpdate("rooms/" + room, {
+                status: "playing", turn: "p1"
+            }, function() {
+                dbUpdate("rooms/" + room + "/p1", { score: 0 }, function() {
+                    dbUpdate("rooms/" + room + "/p2", { score: 0 }, function() {});
+                });
             });
         });
     });
 }
 
-// ===== GAME POLL =====
 function startGamePoll() {
-    startPoll(function(data) {
-        if (!data) {
-            toast("Oda kapandı.", "t");
-            clean(); sw("S0");
-            return;
-        }
-        gst = data;
-        render(data);
-        if (data.status === "finished") showRes(data);
+    startPoll(function(d) {
+        if (!d) { toast("Oda kapandı.", "t"); clean(); sw("S0"); return; }
+        gst = d; render(d);
+        if (d.status === "finished") showRes(d);
     });
 }
 
-// ===== RENDER =====
 function render(d) {
     if (!d || d.status === "waiting") return;
-
     document.getElementById("gn1").textContent = (d.p1 ? d.p1.name : "P1") + (role === "p1" ? " (Sen)" : "");
     document.getElementById("gn2").textContent = (d.p2 ? d.p2.name : "P2") + (role === "p2" ? " (Sen)" : "");
     document.getElementById("gs1").textContent = d.p1 ? d.p1.score : 0;
     document.getElementById("gs2").textContent = d.p2 ? d.p2.score : 0;
 
-    var pc1 = document.getElementById("pc1");
-    var pc2 = document.getElementById("pc2");
+    var pc1 = document.getElementById("pc1"), pc2 = document.getElementById("pc2");
     if (d.turn === "p1") { pc1.classList.add("act"); pc2.classList.remove("act"); }
     else { pc2.classList.add("act"); pc1.classList.remove("act"); }
 
     var tb = document.getElementById("tBar");
-    if (d.status === "finished") {
-        tb.textContent = "🏁 Oyun Bitti!"; tb.className = "tbar op";
-    } else if (d.turn === role) {
-        tb.textContent = "🎯 Sıra sizde! Bir kare seçin."; tb.className = "tbar my";
-    } else {
-        tb.textContent = "⏳ Rakibin oynuyor..."; tb.className = "tbar op";
-    }
+    if (d.status === "finished") { tb.textContent = "🏁 Oyun Bitti!"; tb.className = "tbar op"; }
+    else if (d.turn === role) { tb.textContent = "🎯 Sıra sizde!"; tb.className = "tbar my"; }
+    else { tb.textContent = "⏳ Rakibin oynuyor..."; tb.className = "tbar op"; }
 
-    var rev = d.revealed || {};
-    var rk = Object.keys(rev);
-    var gf = 0, tf = 0;
+    var rev = d.revealed || {}, rk = Object.keys(rev), gf = 0, tf = 0;
     for (var i = 0; i < rk.length; i++) {
         if (rev[rk[i]] === "gold") gf++;
         if (rev[rk[i]] === "trap") tf++;
@@ -492,34 +424,24 @@ function render(d) {
     document.getElementById("xG").textContent = NG - gf;
     document.getElementById("xT").textContent = NT - tf;
     document.getElementById("xL").textContent = TC - rk.length;
-
     rGrid(d);
 }
 
 function rGrid(d) {
-    var con = document.getElementById("GR");
-    var rev = d.revealed || {};
-
+    var con = document.getElementById("GR"), rev = d.revealed || {};
     if (con.children.length !== TC) {
         con.innerHTML = "";
         for (var i = 0; i < TC; i++) {
             var c = document.createElement("button");
             c.className = "cl";
             var s = document.createElement("span");
-            s.className = "cc";
-            c.appendChild(s);
-            (function(idx) {
-                c.addEventListener("click", function() { cellTap(idx); });
-            })(i);
+            s.className = "cc"; c.appendChild(s);
+            (function(idx) { c.addEventListener("click", function() { cellTap(idx); }); })(i);
             con.appendChild(c);
         }
     }
-
     for (var i = 0; i < TC; i++) {
-        var c = con.children[i];
-        var s = c.querySelector(".cc");
-        var k = "" + i;
-
+        var c = con.children[i], s = c.querySelector(".cc"), k = "" + i;
         if (rev[k]) {
             if (!c.classList.contains("rv")) {
                 c.classList.add("rv", "pp");
@@ -532,47 +454,32 @@ function rGrid(d) {
         } else {
             c.classList.remove("rv", "gold", "trap", "empty", "ds", "pp");
             s.textContent = "";
-            if (d.status === "finished" || d.turn !== role) {
-                c.classList.add("ds");
-            } else {
-                c.classList.remove("ds");
-            }
+            if (d.status === "finished" || d.turn !== role) c.classList.add("ds");
+            else c.classList.remove("ds");
         }
     }
 }
 
-// ===== CELL TAP =====
 function cellTap(i) {
     if (busy) return;
     if (!gst || gst.status !== "playing") return;
     if (gst.turn !== role) { toast("Sıra rakipte!", "i"); return; }
     var rev = gst.revealed || {};
     if (rev["" + i]) return;
-
     busy = true;
 
-    var board = gst.board;
-    var ct = board[i];
+    var board = gst.board, ct = board[i];
     var sc = gst[role] ? gst[role].score : 0;
     var nt = role === "p1" ? "p2" : "p1";
 
-    if (ct === "gold") {
-        sc += 10; nt = role;
-        toast("+10 Altın! Tekrar oyna! 🪙", "g");
-    } else if (ct === "trap") {
-        sc = Math.max(0, sc - 5);
-        toast("-5 Tuzak! 💥", "t");
-    } else {
-        toast("Boş kare.", "i");
-    }
+    if (ct === "gold") { sc += 10; nt = role; toast("+10 Altın! Tekrar oyna! 🪙", "g"); }
+    else if (ct === "trap") { sc = Math.max(0, sc - 5); toast("-5 Tuzak! 💥", "t"); }
+    else { toast("Boş kare.", "i"); }
 
-    // Write revealed cell
-    dbWrite("rooms/" + room + "/revealed/" + i, ct, function(ok1) {
-        // Write score
-        dbWrite("rooms/" + room + "/" + role + "/score", sc, function(ok2) {
-            // Check if game over
-            var revCount = Object.keys(rev).length + 1;
-            if (revCount >= TC) {
+    dbWrite("rooms/" + room + "/revealed/" + i, ct, function() {
+        dbWrite("rooms/" + room + "/" + role + "/score", sc, function() {
+            var rc2 = Object.keys(rev).length + 1;
+            if (rc2 >= TC) {
                 dbUpdate("rooms/" + room, { turn: nt, status: "finished" }, function() { busy = false; });
             } else {
                 dbWrite("rooms/" + room + "/turn", nt, function() { busy = false; });
@@ -581,19 +488,14 @@ function cellTap(i) {
     });
 }
 
-// ===== RESULT =====
 function showRes(d) {
-    stopPoll(); // stop polling when game is finished
-    var s1 = d.p1 ? d.p1.score : 0;
-    var s2 = d.p2 ? d.p2.score : 0;
+    stopPoll();
+    var s1 = d.p1 ? d.p1.score : 0, s2 = d.p2 ? d.p2.score : 0;
     document.getElementById("rs1").textContent = s1;
     document.getElementById("rs2").textContent = s2;
     document.getElementById("rn1").textContent = d.p1 ? d.p1.name : "P1";
     document.getElementById("rn2").textContent = d.p2 ? d.p2.name : "P2";
-
-    var my = role === "p1" ? s1 : s2;
-    var op = role === "p1" ? s2 : s1;
-
+    var my = role === "p1" ? s1 : s2, op = role === "p1" ? s2 : s1;
     if (my > op) {
         document.getElementById("rIco").textContent = "🏆";
         document.getElementById("rTit").textContent = "Kazandınız!";
@@ -609,7 +511,7 @@ function showRes(d) {
         document.getElementById("rIco").textContent = "🤝";
         document.getElementById("rTit").textContent = "Berabere!";
         document.getElementById("rTit").style.color = "#3498db";
-        document.getElementById("rSub").textContent = "İkiniz de harika!";
+        document.getElementById("rSub").textContent = "Harika!";
     }
     document.getElementById("resOv").classList.add("on");
 }
@@ -636,29 +538,15 @@ function doCft() {
     }
 }
 
-// ===== LEAVE =====
-function exitLobby() {
-    if (room) dbDelete("rooms/" + room);
-    clean(); sw("S0");
-}
-
-function exitP2() {
-    if (room) dbDelete("rooms/" + room + "/p2");
-    clean(); sw("S0");
-}
-
-function quitGame() {
-    if (room) dbDelete("rooms/" + room);
-    clean(); toast("Ayrıldınız.", "i"); sw("S0");
-}
-
+function exitLobby() { if (room) dbDelete("rooms/" + room); clean(); sw("S0"); }
+function exitP2() { if (room) dbDelete("rooms/" + room + "/p2"); clean(); sw("S0"); }
+function quitGame() { if (room) dbDelete("rooms/" + room); clean(); toast("Ayrıldınız.", "i"); sw("S0"); }
 function goMenu() {
     document.getElementById("resOv").classList.remove("on");
     if (room) dbDelete("rooms/" + room);
     clean(); sw("S0");
 }
 
-// ===== INIT =====
 testConnection();
 </script>
 </body>
